@@ -6,9 +6,12 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [reference-server, collectors]
     defaults:
       run:
-        working-directory: reference-server
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0 # setup-uv publishes no floating major tag
