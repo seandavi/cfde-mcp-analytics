@@ -1,6 +1,6 @@
 """Traffic generator: N known calls per tool with a fixed clientInfo; prints counts as JSON.
 
-Usage: cfde-traffic URL [N]
+Usage: cfde-traffic URL [N] [auto|legacy]
 """
 
 import asyncio
@@ -40,4 +40,5 @@ async def run(
 def main() -> None:
     url = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000/mcp"
     n = int(sys.argv[2]) if len(sys.argv) > 2 else 10
-    print(json.dumps(asyncio.run(run(url, n)), indent=2))
+    mode = sys.argv[3] if len(sys.argv) > 3 else "auto"
+    print(json.dumps(asyncio.run(run(url, n, mode=mode)), indent=2))

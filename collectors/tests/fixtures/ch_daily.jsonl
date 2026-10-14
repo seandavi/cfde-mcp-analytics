@@ -1,0 +1,8 @@
+{"date": "2026-10-14", "server": "reference", "method": "initialize", "tool": "", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 1, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "notifications/initialized", "tool": "", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 1, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "server/discover", "tool": "", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 1, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "tools/call", "tool": "add", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 8, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "tools/call", "tool": "always_fail", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "tool_error", "calls": 8, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "tools/call", "tool": "echo_upper", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 8, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "tools/call", "tool": "gene_symbol_lookup", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 8, "distinct_clients": 1}
+{"date": "2026-10-14", "server": "reference", "method": "tools/list", "tool": "", "client_name": "cfde-traffic", "client_version": "0.1.0", "outcome": "ok", "calls": 2, "distinct_clients": 1}

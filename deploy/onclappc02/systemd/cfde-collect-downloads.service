@@ -1,0 +1,21 @@
+# Daily floor metrics: PyPI/npm/Docker Hub/MCP Registry counts -> Postgres raw.mcp_downloads
+# (analytics.mcp_downloads_daily). Instance of monode infrastructure/SCHEDULING.md.
+# Install by copying (not symlinking), see deploy/onclappc02/APPLY.md.
+[Unit]
+Description=Collect MCP package download counts into Postgres raw.mcp_downloads
+Documentation=https://github.com/seandavi/cfde-mcp-analytics/blob/main/deploy/onclappc02/APPLY.md
+After=network-online.target
+Wants=network-online.target
+OnFailure=ntfy-notify@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/davsean/Documents/git/cfde-mcp-analytics/collectors
+# DATABASE_URL (gitignored; see APPLY.md).
+EnvironmentFile=/home/davsean/Documents/git/cfde-mcp-analytics/collectors/.env
+ExecStart=%h/.local/bin/uv run --no-dev cfde-collect-downloads
+# ~20 HTTP requests with retries; exits non-zero if any package failed (rows that did fetch are kept).
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

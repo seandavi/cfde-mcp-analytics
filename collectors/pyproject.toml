@@ -1,7 +1,7 @@
 [project]
 name = "cfde-collectors"
 version = "0.1.0"
-description = "Floor-metrics collector: PyPI, npm, Docker Hub and MCP Registry counts for CFDE MCP packages"
+description = "CFDE MCP metrics jobs: download-count floor collector and the gateway call rollup (ClickHouse to Postgres)"
 authors = [
     { name = "Sean Davis", email = "seandavi@gmail.com" }
 ]
@@ -12,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 cfde-collect-downloads = "cfde_collectors.downloads:main"
+cfde-rollup-mcp = "cfde_collectors.mcp_rollup:main"
 
 [build-system]
 requires = ["uv_build>=0.11.21,<0.12.0"]
