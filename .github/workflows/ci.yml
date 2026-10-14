@@ -20,3 +20,12 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pyright
       - run: uv run pytest -q
+  deploy-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: agentgateway config validates (pinned v1.6.0)
+        run: >-
+          docker run --rm -v "$PWD/deploy/onclappc02/gateway.yaml:/c.yaml:ro"
+          ghcr.io/agentgateway/agentgateway:v1.6.0 -f /c.yaml --validate-only
+      - run: docker compose -f deploy/onclappc02/docker-compose.yml -f deploy/onclappc02/compose.local.yml config -q

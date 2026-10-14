@@ -36,3 +36,5 @@ asyncio.run(main())'
 ```
 
 The upstreams are other teams' production servers: keep test traffic light and read-only.
+
+Production config (onclappc02, adds `/reference`, `/cfde-mcp` and `/health`): [`deploy/onclappc02/gateway.yaml`](../deploy/onclappc02/gateway.yaml).

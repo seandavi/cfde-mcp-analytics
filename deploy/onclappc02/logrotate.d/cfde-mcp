@@ -1,0 +1,25 @@
+# /etc/logrotate.d/cfde-mcp
+#
+# Source of truth: cfde-mcp-analytics/deploy/onclappc02/logrotate.d/cfde-mcp
+# Install: `sudo install -m 0644 deploy/onclappc02/logrotate.d/cfde-mcp /etc/logrotate.d/cfde-mcp`
+# Test:    `sudo logrotate -d /etc/logrotate.d/cfde-mcp`
+#
+# Strategy: copytruncate. agentgateway cannot reopen its log (no file output, no USR1 handling;
+# the container's shell appends stdout with >>), so unlike Traefik's USR1 recipe we copy then
+# truncate. ponytail: lines written between the copy and the truncate (a few ms) can be lost to
+# Vector; at POC volume that is well inside the ±5% budget. If it ever is not, switch to Vector's
+# docker_logs source or a size-based rotating writer.
+# Vector tails only gateway.log (not gateway.log.1), so rotated copies are never re-shipped.
+# Raw lines hold raw client IPs (X-Forwarded-For, src.addr): keep 14 days, less than ClickHouse's 90.
+
+/data/davsean/cfde_mcp_logs/gateway.log {
+    daily
+    rotate 14
+    maxsize 200M
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    su davsean davsean
+}
