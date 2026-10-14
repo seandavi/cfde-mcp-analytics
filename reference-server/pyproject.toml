@@ -1,0 +1,38 @@
+[project]
+name = "cfde-reference-mcp"
+version = "0.1.0"
+description = "Reference MCP server with a ground-truth call log, plus a traffic generator"
+readme = "README.md"
+authors = [
+    { name = "Sean Davis", email = "seandavi@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=2.3.0",
+]
+
+[project.scripts]
+cfde-reference-mcp = "cfde_reference_mcp:main"
+cfde-traffic = "cfde_reference_mcp.traffic:main"
+
+[build-system]
+requires = ["uv_build>=0.11.21,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"

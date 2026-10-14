@@ -5,6 +5,11 @@ Data Ecosystem (CFDE) — a "Google Analytics for MCP". Goal: consolidated usage
 (tool calls, distinct clients, client apps, trends) across servers built by many
 independent teams. Operational metrics (latency etc.) are secondary.
 
+## Components
+
+- [`reference-server/`](reference-server/): `cfde-reference-mcp`, a trivial MCP server with a ground-truth
+  per-call log, plus the `cfde-traffic` generator. `just lint | typecheck | test | serve | traffic URL N`.
+
 ## Docs
 
 ### Research
