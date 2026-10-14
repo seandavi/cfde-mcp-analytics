@@ -1,0 +1,23 @@
+# Daily gateway rollup: ClickHouse mcp_requests -> Postgres raw.mcp_daily_calls / raw.mcp_clients_monthly
+# (analytics.mcp_daily, analytics.mcp_clients_monthly). Instance of monode infrastructure/SCHEDULING.md.
+# Install by copying (not symlinking), see deploy/onclappc02/APPLY.md.
+[Unit]
+Description=Roll up cfde-mcp gateway calls into Postgres analytics.mcp_*
+Documentation=https://github.com/seandavi/cfde-mcp-analytics/blob/main/deploy/onclappc02/APPLY.md
+After=network-online.target
+Wants=network-online.target
+OnFailure=ntfy-notify@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/davsean/Documents/git/cfde-mcp-analytics/collectors
+# DATABASE_URL, CLICKHOUSE_URL, CLICKHOUSE_USER, CLICKHOUSE_PASSWORD (gitignored; see APPLY.md).
+EnvironmentFile=/home/davsean/Documents/git/cfde-mcp-analytics/collectors/.env
+# %h/.local/bin/uv, never `/usr/bin/env uv`: systemd --user's PATH excludes ~/.local/bin.
+# Re-rolls the last 3 complete UTC days (idempotent), so a missed run self-heals.
+ExecStart=%h/.local/bin/uv run --no-dev cfde-rollup-mcp
+# Runs in seconds; a hang becomes a failure (and an ntfy alert). Not RuntimeMaxSec (no effect on oneshot).
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

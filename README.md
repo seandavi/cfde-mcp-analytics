@@ -11,6 +11,12 @@ independent teams. Operational metrics (latency etc.) are secondary.
   per-call log, plus the `cfde-traffic` generator. `just lint | typecheck | test | serve | traffic URL N`.
 - [`gateway/`](gateway/): agentgateway v1.6.0 config fronting GlyGen, PWB and PerturbSeqr, with JSON access
   log fields for tool, clientInfo, protocol version and errors. How to run it: [gateway/README.md](gateway/README.md).
+- [`deploy/onclappc02/`](deploy/onclappc02/): production compose + gateway config for `cfde-mcp.cancerdatasci.org`,
+  systemd timers, and [APPLY.md](deploy/onclappc02/APPLY.md), the ordered checklist for the shared-infra steps.
+- [`pipeline/`](pipeline/): ClickHouse `mcp_requests` schema and the Vector transform (the privacy guard) with
+  its unit tests (`just vector-test`).
+- [`collectors/`](collectors/): daily jobs into Postgres `analytics.mcp_*`: `cfde-rollup-mcp` (gateway calls)
+  and `cfde-collect-downloads` (download-count floor).
 
 ## Docs
 

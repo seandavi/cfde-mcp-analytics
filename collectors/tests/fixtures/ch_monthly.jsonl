@@ -1,0 +1,2 @@
+{"month": "2026-10-01", "server": "reference", "client_name": "*", "tool_calls": 32, "distinct_clients": 1}
+{"month": "2026-10-01", "server": "reference", "client_name": "cfde-traffic", "tool_calls": 32, "distinct_clients": 1}

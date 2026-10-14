@@ -1,0 +1,248 @@
+# Vector fragment: cfde-mcp gateway access log -> ClickHouse mcp_requests.
+#
+# Source of truth for the transform and its tests. Merged by hand into monode
+# infrastructure/compose/vector/vector.yaml (the one shared Vector on onclappc02); see
+# deploy/onclappc02/APPLY.md. Test it standalone:
+#
+#   docker run --rm -e CFDE_MCP_HMAC_SALT=test-salt-not-secret -e CLICKHOUSE_DB=default \
+#     -e CLICKHOUSE_USER=x -e CLICKHOUSE_PASSWORD=x -v "$(pwd)/pipeline/vector:/etc/vector:ro" \
+#     timberio/vector:0.45.0-debian test /etc/vector/cfde-mcp.yaml
+#
+# This transform is the privacy guard (D6): the output is rebuilt from an allowlist, so any
+# field the gateway adds later (tool arguments, error messages, IPs, paths) never reaches
+# ClickHouse. Client IP and session token leave only as HMAC-SHA256 with a monthly salt.
+
+sources:
+  cfde_mcp_gateway:
+    type: file
+    read_from: beginning
+    # Only the live file: logrotate copytruncates to gateway.log.1, which must not be re-read.
+    include:
+      - /var/log/cfde-mcp/gateway.log
+    # agentgateway writes one JSON object per line.
+
+transforms:
+  parse_cfde_mcp:
+    type: remap
+    inputs:
+      - cfde_mcp_gateway
+    # Never forward an event the program did not finish: with drop_on_error false, Vector
+    # would pass the raw line (IPs and all) through on any runtime error, e.g. a missing salt.
+    drop_on_abort: true
+    drop_on_error: true
+    source: |
+      parsed = object!(parse_json!(string!(.message)))
+      # Keep MCP JSON-RPC access-log lines only. Drops startup lines, /health (also filtered in
+      # the gateway), legacy GET SSE streams (405 noise on some servers) and DELETE session close.
+      method = string(parsed."mcp.method.name") ?? ""
+      if parsed.scope != "request" || method == "" { abort }
+
+      salt = get_env_var!("CFDE_MCP_HMAC_SALT")
+      assert!(salt != "", "CFDE_MCP_HMAC_SALT is empty")
+
+      status = to_int(parsed."http.status") ?? 0
+      # Not to_int(): it maps a missing field (null) to 0.
+      rpc_code = parsed."mcp.error.code"
+      if !is_integer(rpc_code) { rpc_code = parsed."mcp.rpc_error.code" }
+      if !is_integer(rpc_code) { rpc_code = null }
+      outcome = if status >= 500 {
+        "http_error"
+      } else if rpc_code != null {
+        "rpc_error"
+      } else if status >= 400 {
+        "http_error"
+      } else if parsed."mcp.tool.is_error" == true {
+        "tool_error"
+      } else {
+        "ok"
+      }
+
+      # Client IP: first X-Forwarded-For hop (set by Traefik), else the socket peer.
+      ip = ""
+      xff = string(parsed."client.forwarded_for") ?? ""
+      if xff != "" {
+        hops = split(xff, ",")
+        ip = strip_whitespace(string(hops[0]) ?? "")
+      }
+      if ip == "" {
+        src = string(parsed."src.addr") ?? ""
+        ip = replace(replace(src, r':\d+$', ""), r'[\[\]]', "")
+      }
+      ua = string(parsed.user_agent) ?? ""
+      session = string(parsed."mcp.client.session") ?? ""
+      session_hash = ""
+      if session != "" {
+        session_hash = encode_base16(hmac("session|" + session, salt, algorithm: "SHA-256"))
+      }
+
+      . = {
+        "timestamp": parse_timestamp(string(parsed.time) ?? "", "%+") ?? now(),
+        "server": replace(string(parsed.route) ?? "", r'^[^/]*/', ""),
+        "method": method,
+        "tool": string(parsed."gen_ai.tool.name") ?? "",
+        "outcome": outcome,
+        "http_status": status,
+        "rpc_error_code": rpc_code,
+        "protocol_version": string(parsed."mcp.protocol.version") ?? "",
+        "client_name": string(parsed."mcp.client.name") ?? "",
+        "client_version": string(parsed."mcp.client.version") ?? "",
+        "user_agent": ua,
+        "client_hash": encode_base16(hmac(ip + "|" + ua, salt, algorithm: "SHA-256")),
+        "session_token_hash": session_hash,
+      }
+
+sinks:
+  clickhouse_cfde_mcp:
+    type: clickhouse
+    inputs:
+      - parse_cfde_mcp
+    endpoint: http://clickhouse:8123
+    database: ${CLICKHOUSE_DB}
+    table: mcp_requests
+    auth:
+      strategy: basic
+      user: ${CLICKHOUSE_USER}
+      password: ${CLICKHOUSE_PASSWORD}
+    skip_unknown_fields: true
+    date_time_best_effort: true
+    compression: gzip
+    batch:
+      max_events: 1000
+      timeout_secs: 2
+    request:
+      retry_attempts: 5
+      retry_initial_backoff_secs: 1
+      retry_max_duration_secs: 30
+
+# Unit tests (`vector test`). Run with CFDE_MCP_HMAC_SALT=test-salt-not-secret; expected hashes
+# are hex HMAC-SHA256 under that key (python: hmac.new(key, msg, hashlib.sha256).hexdigest()).
+# CFDESENTINEL7f3a9c stands for a tool argument; 203.0.113.7 for a raw client IP.
+tests:
+  - name: sentinel in every non-allowlisted field never reaches output; IP only as a hash
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"level":"info","time":"2026-10-14T21:52:36.652452Z","scope":"request","gateway":"default/default","listener":"default","route":"default/glygen","src.addr":"172.18.0.2:50930","client.forwarded_for":"203.0.113.7, 10.0.0.1","http.method":"POST","http.host":"cfde-mcp.cancerdatasci.org","http.path":"/glygen/mcp?q=CFDESENTINEL7f3a9c","http.version":"HTTP/1.1","http.status":200,"protocol":"mcp","mcp.method.name":"tools/call","mcp.target":"glygen","mcp.resource.type":"tool","gen_ai.tool.name":"get_protein_summary","mcp.session.id":"CFDESENTINEL7f3a9c","duration":"1ms","mcp.protocol.version":"2026-07-28","user_agent":"claude-code/2.1.0","mcp.client.name":"claude-code","mcp.client.version":"2.1.0","mcp.tool.is_error":false,"mcp.error.message":"bad input: CFDESENTINEL7f3a9c","mcp.tool.arguments":{"q":"CFDESENTINEL7f3a9c"},"mcp.tool.result":"CFDESENTINEL7f3a9c","request.body":"CFDESENTINEL7f3a9c","error":"CFDESENTINEL7f3a9c","authorization":"Bearer CFDESENTINEL7f3a9c"}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: |
+              out = encode_json(.)
+              assert!(!contains(out, "CFDESENTINEL7f3a9c"), "sentinel leaked")
+              assert!(!contains(out, "203.0.113.7"), "raw client IP leaked")
+              assert!(!contains(out, "172.18.0.2"), "raw peer IP leaked")
+              assert_eq!(length(keys(.)), 13)
+              assert_eq!(.client_hash, "e993d917a1454587b09c113d5e1c8e70a24ff536644047608d573fd3e9a87c85")
+              assert_eq!(.server, "glygen")
+              assert_eq!(.method, "tools/call")
+              assert_eq!(.tool, "get_protein_summary")
+              assert_eq!(.outcome, "ok")
+              assert_eq!(.http_status, 200)
+              assert_eq!(.rpc_error_code, null)
+              assert_eq!(.protocol_version, "2026-07-28")
+              assert_eq!(.client_name, "claude-code")
+              assert_eq!(.client_version, "2.1.0")
+              assert_eq!(.user_agent, "claude-code/2.1.0")
+              assert_eq!(.session_token_hash, "")
+              assert_eq!(.timestamp, t'2026-10-14T21:52:36.652452Z')
+
+  - name: legacy session line hashes the token and the socket peer when no X-Forwarded-For
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/reference","src.addr":"172.18.0.9:41234","http.status":200,"mcp.method.name":"tools/call","gen_ai.tool.name":"echo_upper","mcp.protocol.version":"2025-11-25","mcp.client.session":"eyJ0IjoibWNwIn0","user_agent":"python-httpx/0.28.1","mcp.tool.is_error":false}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: |
+              assert!(!contains(encode_json(.), "eyJ0IjoibWNwIn0"), "raw session token leaked")
+              assert_eq!(.session_token_hash, "e6518395d1ab71898d3bc87c6f0b92e771c651559185b3e76b0534b3a5770479")
+              assert_eq!(.client_hash, "d160f5f3b575775f5e2f5b24c6c280a7fe269e91f0c67af095dbd597a695d457")
+              assert_eq!(.client_name, "")
+              assert_eq!(.server, "reference")
+
+  - name: outcome tool_error (HTTP 200, result.isError)
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/reference","http.status":200,"mcp.method.name":"tools/call","gen_ai.tool.name":"always_fail","mcp.tool.is_error":true}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: assert_eq!(.outcome, "tool_error")
+
+  - name: outcome rpc_error, legacy (HTTP 200 + built-in mcp.error.code)
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/local","http.status":200,"mcp.method.name":"tools/call","gen_ai.tool.name":"rpcfail","mcp.error.code":-32602,"mcp.protocol.version":"2025-11-25"}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.outcome, "rpc_error")
+              assert_eq!(.rpc_error_code, -32602)
+
+  - name: outcome rpc_error, 2026-07-28 (HTTP 400 + CEL mcp.rpc_error.code)
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/local","http.status":400,"mcp.method.name":"tools/call","gen_ai.tool.name":"rpcfail","error":"mcp: upstream error: 400 Bad Request","mcp.protocol.version":"2026-07-28","mcp.rpc_error.code":-32602}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.outcome, "rpc_error")
+              assert_eq!(.rpc_error_code, -32602)
+
+  - name: outcome http_error on 5xx (upstream timeout)
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/glygen","http.status":500,"mcp.method.name":"tools/call","gen_ai.tool.name":"get_protein_summary","error":"upstream call timeout"}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: assert_eq!(.outcome, "http_error")
+
+  - name: outcome http_error on 4xx without a JSON-RPC code (cfde-mcp without API key)
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/cfde-mcp","http.status":401,"mcp.method.name":"initialize","mcp.client.name":"x","mcp.client.version":"1"}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: assert_eq!(.outcome, "http_error")
+
+  - name: outcome ok when isError is absent (PWB, PerturbSeqr)
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/pwb","http.status":200,"mcp.method.name":"tools/call","gen_ai.tool.name":"search_published"}'
+    outputs:
+      - extract_from: parse_cfde_mcp
+        conditions:
+          - type: vrl
+            source: assert_eq!(.outcome, "ok")
+
+  - name: drops non-MCP lines (GET stream, startup), so no raw line reaches the sink
+    inputs:
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"time":"2026-10-14T21:52:36Z","scope":"request","route":"default/glygen","src.addr":"203.0.113.7:1","http.method":"GET","http.status":405}'
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: '{"level":"info","time":"2026-10-14T21:52:30Z","scope":"agentgateway","message":"started bind"}'
+      - insert_at: parse_cfde_mcp
+        type: raw
+        value: 'not json CFDESENTINEL7f3a9c'
+    no_outputs_from:
+      - parse_cfde_mcp

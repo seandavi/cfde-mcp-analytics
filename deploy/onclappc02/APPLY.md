@@ -12,6 +12,11 @@ monode at `~/Documents/git/monode`.
 | `gateway/Dockerfile` | Official v1.6.0 image + static busybox, so stdout can be appended to `/logs/gateway.log` |
 | `logrotate.d/cfde-mcp` | Daily copytruncate rotation of the gateway log, 14 days |
 | `compose.local.yml` | Overlay for local validation: no Traefik labels, no `proxy` network, loopback port |
+| `systemd/` | `cfde-rollup-mcp` and `cfde-collect-downloads` service + timer units (SCHEDULING.md) |
+| `verify_counts.py` | The #22 check: gateway counts in ClickHouse vs the reference server's own log |
+| `../../pipeline/clickhouse/mcp_requests.sql` | ClickHouse `mcp_requests` (90-day TTL) + `mcp_requests_attributed` view |
+| `../../pipeline/vector/cfde-mcp.yaml` | Vector source/transform/sink + `vector test` unit tests (privacy guard) |
+| `../../collectors/migrations/0003*, 0004*` | Postgres `raw.mcp_daily_calls`, `raw.mcp_clients_monthly`, `analytics.mcp_daily`, `analytics.mcp_clients_monthly` |
 
 ## Phase 3: deploy (issues #14–#18)
 
@@ -231,6 +236,138 @@ plumbing" row for Vector once Phase 4 below is applied.
 
 All five routes work from Claude and one other client; the GCP uptime check is green.
 
+## Phase 4: logging pipeline (issues #19–#22)
+
+### 7. ClickHouse table (#19, monode PR)
+
+Copy the migration into monode's numbered migrations (platform convention: Vector does not
+create tables) and apply it:
+
+```bash
+cd ~/Documents/git/monode/infrastructure/compose/clickhouse
+cp ~/Documents/git/cfde-mcp-analytics/pipeline/clickhouse/mcp_requests.sql migrations/004_mcp_requests.sql
+docker exec -i clickhouse clickhouse-client \
+  --user="$(grep ^CLICKHOUSE_USER .env | cut -d= -f2)" --password="$(grep ^CLICKHOUSE_PASSWORD .env | cut -d= -f2)" \
+  --multiquery < migrations/004_mcp_requests.sql
+```
+
+### 8. Vector source + transform (#20, same monode PR)
+
+In `infrastructure/compose/vector/`:
+
+1. `vector.yaml`: copy the `cfde_mcp_gateway` source, `parse_cfde_mcp` transform and
+   `clickhouse_cfde_mcp` sink from `pipeline/vector/cfde-mcp.yaml` into the matching sections.
+   That file stays the source of truth: its `tests:` run in this repo's CI (`just vector-test`).
+2. `docker-compose.yml`:
+   ```diff
+          - /data/davsean/cfde_atlas_logs:/var/log/cfde-atlas:ro
+   +      # cfde-mcp gateway access log (cfde-mcp-analytics deploy/onclappc02). Read-only.
+   +      - /data/davsean/cfde_mcp_logs:/var/log/cfde-mcp:ro
+   ...
+          CLICKHOUSE_DB: ${CLICKHOUSE_DB:-default}
+   +      # HMAC key for the cfde-mcp client/session hashes (GSM cfde-mcp-client-hash-signing-key).
+   +      CFDE_MCP_HMAC_SALT: ${CFDE_MCP_HMAC_SALT:?CFDE_MCP_HMAC_SALT must be set in .env}
+   ```
+3. Salt into Vector's `.env`, then restart and check:
+   ```bash
+   cd ~/Documents/git/monode/infrastructure/compose/vector
+   echo "CFDE_MCP_HMAC_SALT=$(gcloud secrets versions access latest --secret=cfde-mcp-client-hash-signing-key --project=cdsci-infra)" >> .env
+   docker compose up -d vector && docker compose logs --tail 20 vector
+   docker exec clickhouse clickhouse-client --user=... --password=... \
+     -q "SELECT server, method, outcome, count() FROM mcp_requests WHERE timestamp > now() - INTERVAL 1 HOUR GROUP BY ALL"
+   ```
+
+If the salt is missing or empty, the transform drops every event (it never forwards a raw line),
+and Vector logs `CFDE_MCP_HMAC_SALT is empty`.
+
+### 9. Traefik MCP headers, the header-only control (#21, separate monode PR)
+
+`infrastructure/compose/traefik/traefik.yml`:
+
+```diff
+       names:
+         User-Agent: keep
+         X-Forwarded-For: keep
+         X-Real-Ip: keep
+         Cf-Connecting-Ip: keep
+         Cf-Ipcountry: keep
+         Cf-Ray: keep
++        # MCP 2026-07-28 request headers: what a plain reverse proxy can see without an
++        # MCP-aware gateway (cfde-mcp-analytics D8). Mcp-Name is the tool name, never arguments.
++        Mcp-Method: keep
++        Mcp-Name: keep
++        Mcp-Protocol-Version: keep
+```
+
+This is static config, so it needs `docker compose -f compose/traefik/docker-compose.yml up -d traefik`
+(a few seconds of downtime for every hostname; pick a quiet moment). No ClickHouse or Vector change
+is needed: `traefik_access_log.raw` keeps the whole line, so the control is a query:
+
+```sql
+SELECT JSONExtractString(raw, 'request_Mcp-Method') AS method, JSONExtractString(raw, 'request_Mcp-Name') AS tool, count()
+FROM traefik_access_log WHERE request_host = 'cfde-mcp.cancerdatasci.org' AND timestamp > now() - INTERVAL 1 DAY
+GROUP BY ALL ORDER BY 3 DESC;
+```
+
+Only 2026-07-28 clients send these headers; legacy clients put the method in the body, which
+Traefik cannot see. That gap is the point of the comparison.
+
+### 10. Verify counts within 5% (#22)
+
+```bash
+cd ~/Documents/git/cfde-mcp-analytics
+set -a; . collectors/.env; set +a        # CLICKHOUSE_URL/USER/PASSWORD, see step 12
+uv run --directory reference-server python ../deploy/onclappc02/verify_counts.py 25
+```
+
+The script sends 25 calls per reference tool in each protocol generation (200 in total) through
+`https://cfde-mcp.cancerdatasci.org/reference/mcp`. It then prints sent / server log / ClickHouse
+per (tool, outcome) and exits 0 when the gateway total is within 5% of the server's own count and
+at least 80% of calls are attributed to a client app.
+
+## Phase 5: daily jobs (issue #23, plus the downloads collector)
+
+### 11. Postgres tables and views
+
+```bash
+cd ~/Documents/git/cfde-mcp-analytics/collectors
+export DATABASE_URL="postgresql://cfde_atlas_dev:$(gcloud secrets versions access latest --secret=cfde-atlas-dev-db-password-onclappc02 --project=cdsci-infra)@127.0.0.1:5432/cfde_atlas_dev"
+for f in migrations/000*.sql; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done   # all idempotent
+```
+
+### 12. Job environment
+
+`collectors/.env` (gitignored, `chmod 600`), read by both units:
+
+```bash
+DATABASE_URL=postgresql://cfde_atlas_dev:<password>@127.0.0.1:5432/cfde_atlas_dev
+CLICKHOUSE_URL=https://clickhouse.cancerdatasci.org
+CLICKHOUSE_USER=<from monode compose/clickhouse/.env>
+CLICKHOUSE_PASSWORD=<from monode compose/clickhouse/.env>
+```
+
+Dry runs first: `just rollup-mcp --dry-run` and `just collect-downloads --dry-run`.
+
+### 13. Install the timers (copy, don't symlink)
+
+```bash
+cp deploy/onclappc02/systemd/cfde-{rollup-mcp,collect-downloads}.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now cfde-rollup-mcp.timer cfde-collect-downloads.timer
+systemctl --user start cfde-rollup-mcp.service cfde-collect-downloads.service   # once by hand
+journalctl --user -u cfde-rollup-mcp.service -n 5
+psql "$DATABASE_URL" -c "SELECT server, client_name, SUM(calls) FROM analytics.mcp_daily WHERE date > CURRENT_DATE - 30 GROUP BY 1, 2"
+```
+
+`ntfy-notify@.service` is already installed (shared). Failures post to `cdsci-lake-ops`, and the
+units' output lands in ClickHouse `systemd_user_jobs`.
+
+### 14. INDEX.md plumbing (monode, with step 8)
+
+Extend the Vector row in "Infrastructure plumbing": "… also tails the cfde-mcp gateway log
+(`/data/davsean/cfde_mcp_logs/gateway.log`, rotated by `/etc/logrotate.d/cfde-mcp`) → ClickHouse
+`mcp_requests` (90-day TTL, `004_mcp_requests.sql`)." Add the same table to the ClickHouse rows.
+
 ## Local validation (done before the PR, no shared resources)
 
 ```bash
@@ -238,6 +375,7 @@ CFDE_MCP_LOG_DIR=/data/davsean/tmp/cfde-mcp-test/logs docker compose -p cfde-mcp
   -f deploy/onclappc02/docker-compose.yml -f deploy/onclappc02/compose.local.yml up -d --build
 curl -s http://127.0.0.1:13311/health                                  # Healthy
 just traffic http://127.0.0.1:13311/reference/mcp 5                    # 2026-07-28 client
+just traffic http://127.0.0.1:13311/reference/mcp 3 legacy             # 2025-11-25 session
 grep -c '"mcp.method.name":"tools/call"' /data/davsean/tmp/cfde-mcp-test/logs/gateway.log
 docker logs cfde-mcp-test-reference | grep -c '"event": "tools/call"'  # same number
 docker compose -p cfde-mcp-test -f deploy/onclappc02/docker-compose.yml -f deploy/onclappc02/compose.local.yml down
@@ -251,3 +389,17 @@ carried `mcp.client.name`, legacy lines carried `mcp.client.session` (with clien
 `initialize`). Bearer pass-through: the `/cfde-mcp` route pointed at a local upstream that
 records headers received `Authorization: Bearer <key>` unchanged, and the key did not appear in
 the gateway log.
+
+Pipeline (Phase 4/5) on 2026-10-14, on a throwaway docker network with throwaway ClickHouse,
+Postgres and `timberio/vector:0.45.0-debian` containers (the shared ones were not touched). The
+chain was the test gateway's log file → Vector with `pipeline/vector/cfde-mcp.yaml` → `mcp_requests`.
+- `verify_counts.py 10` (with `GATEWAY_URL`, `REFERENCE_CONTAINER`, `CLICKHOUSE_URL` pointed at the
+  test stack) reported sent 80, server 80, gateway 80 (0.0%) and 100% attributed. Legacy-session
+  calls were attributed through `mcp_requests_attributed`.
+- Calls carrying `CFDESENTINEL7f3a9c` as arguments (including an unknown tool and a bad argument
+  type) left 0 hits in the gateway log and in ClickHouse.
+- `cfde-rollup-mcp` wrote `raw.mcp_daily_calls` and `raw.mcp_clients_monthly`. Running it twice
+  gave the same rows. `analytics.mcp_daily` and `analytics.mcp_clients_monthly` returned 4 and 2
+  rows, and every view column has a comment.
+- `vector test`: 9/9 pass. With an empty salt every event is dropped.
+- `systemd-analyze --user verify` reported nothing on the units.

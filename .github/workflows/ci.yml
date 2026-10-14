@@ -29,3 +29,8 @@ jobs:
           docker run --rm -v "$PWD/deploy/onclappc02/gateway.yaml:/c.yaml:ro"
           ghcr.io/agentgateway/agentgateway:v1.6.0 -f /c.yaml --validate-only
       - run: docker compose -f deploy/onclappc02/docker-compose.yml -f deploy/onclappc02/compose.local.yml config -q
+      - name: Vector transform tests (privacy guard, outcome mapping)
+        run: >-
+          docker run --rm --network none -e CFDE_MCP_HMAC_SALT=test-salt-not-secret
+          -e CLICKHOUSE_DB=default -e CLICKHOUSE_USER=x -e CLICKHOUSE_PASSWORD=x
+          -v "$PWD/pipeline/vector:/etc/vector:ro" timberio/vector:0.45.0-debian test /etc/vector/cfde-mcp.yaml
