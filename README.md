@@ -15,7 +15,11 @@ independent teams. Operational metrics (latency etc.) are secondary.
 | [CFDE MCP server inventory](docs/research/cfde-mcp-inventory.md) | done | As of 2026-10-14: 4 live official/affiliated servers, all remote (cfde-mcp, GlyGen, Playbook Workflow Builder, PerturbSeqr); plus GenSeCo (KC, Broad; remote-capable, hosted URL unknown); 1 stdio-only (Bridge2AI Standards Explorer); DDKG in development. 3 of 4 live are Ma'ayan Lab TypeScript. None has usage telemetry. Most DCC data over MCP flows through third-party wrappers. |
 | [MCP gateways/proxies](docs/research/mcp-gateways.md) | done | Compares ~15 gateways. POC pick: agentgateway (Prometheus `mcp_requests_total` by server/tool, OTel, stdio hosting); runner-up IBM ContextForge (built-in dashboard); plain Caddy/nginx header logging as a control. Per-server routes, no aggregated endpoint for OAuth servers. |
 
-## Next
+### Plan
 
-- POC: gateway fronting CFDE remote servers, with metrics, dashboard, and logging
-  (no tool-argument logging by default).
+- [POC plan: CFDE MCP gateway with usage metrics](docs/poc-plan.md): design,
+  decisions, phases (GitHub milestones), success criteria.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). License: [MIT](LICENSE).
