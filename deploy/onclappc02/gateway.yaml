@@ -1,0 +1,90 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+# agentgateway v1.6.0, production config for cfde-mcp.cancerdatasci.org on onclappc02.
+# Derived from gateway/config.yaml (the Phase 1 spike); see docs/spike-agentgateway.md.
+# On every agentgateway upgrade, re-check that mcp.error.message is still removed and that the
+# 10s default upstream timeout is still overridden (both are defaults that could change).
+config:
+  statsAddr: 127.0.0.1:15020      # Prometheus /metrics, container-local (cross-check only, D4)
+  adminAddr: 127.0.0.1:15000
+  logging:
+    format: json
+gateways:
+  default:
+    port: 3000
+frontendPolicies:
+  accessLog:
+    # GCP uptime probes hit /health every 60s from 5 regions; keep them out of the log.
+    filter: 'request.path != "/health"'
+    # Built-in field, logged by default: the upstream's JSON-RPC error message verbatim.
+    # Servers echo argument values into it (verified in the spike), so drop it.
+    remove: [mcp.error.message]
+    add:
+      # Privacy (D6): every field below extracts a scalar. Never log mcp.tool.arguments,
+      # mcp.tool.result, request.body or response.body whole. Vector (pipeline/vector/) then
+      # keeps only an allowlist and hashes the client IP and session token.
+      mcp.protocol.version: 'coalesce(request.headers["mcp-protocol-version"], json(request.body).params.protocolVersion)'
+      # Client-facing session token (legacy only). Join key from `initialize` to later calls.
+      mcp.client.session: 'coalesce(response.headers["mcp-session-id"], request.headers["mcp-session-id"])'
+      user_agent: 'request.headers["user-agent"]'
+      # Behind Traefik, src.addr is Traefik's container IP. Traefik sets X-Forwarded-For
+      # (it ignores client-supplied values: no forwardedHeaders.trustedIPs on the entrypoint).
+      client.forwarded_for: 'request.headers["x-forwarded-for"]'
+      mcp.client.name: 'coalesce(json(request.body).params.clientInfo.name, json(request.body).params._meta["io.modelcontextprotocol/clientInfo"].name)'
+      mcp.client.version: 'coalesce(json(request.body).params.clientInfo.version, json(request.body).params._meta["io.modelcontextprotocol/clientInfo"].version)'
+      # Tool-level error (HTTP 200, result.isError). Absent when the server omits isError (= ok).
+      mcp.tool.is_error: 'mcp.tool.result.isError'
+      # 2026-07-28 upstreams return JSON-RPC errors as HTTP 4xx, where mcp.error.code is not set.
+      mcp.rpc_error.code: 'json(response.body).error.code'
+routes:
+# Health contract (monode terraform/OBSERVABILITY.md): 200 with "Healthy". Answered by the
+# gateway itself, so it proves Traefik -> gateway is up; it does not probe the upstreams
+# (they are other teams' servers; probing them every 60s x 5 regions is not ours to do).
+- name: health
+  matches: [{path: {exact: /health}}]
+  policies:
+    directResponse: {status: 200, body: "Healthy\n"}
+- name: reference
+  matches: [{path: {pathPrefix: /reference}}]
+  backends:
+  - mcp:
+      targets:
+      - name: reference
+        mcp: {host: http://reference:8000/mcp}
+        policies: {http: {requestTimeout: 120s}}  # default upstream timeout is 10s
+- name: glygen
+  matches: [{path: {pathPrefix: /glygen}}]
+  backends:
+  - mcp:
+      targets:
+      - name: glygen
+        mcp: {host: https://mcp.glygen.org/mcp}
+        policies: {http: {requestTimeout: 120s}}
+- name: pwb
+  matches: [{path: {pathPrefix: /pwb}}]
+  backends:
+  - mcp:
+      targets:
+      - name: pwb
+        mcp: {host: https://playbook-workflow-builder.cloud/api/mcp}
+        policies: {http: {requestTimeout: 120s}}
+- name: perturbseqr
+  matches: [{path: {pathPrefix: /perturbseqr}}]
+  backends:
+  - mcp:
+      targets:
+      - name: perturbseqr
+        mcp: {host: https://perturbseqr.maayanlab.cloud/mcp}
+        policies: {http: {requestTimeout: 120s}}
+# cfde-mcp (DRC) requires `Authorization: Bearer <DRC API key>`. No config needed for
+# pass-through: agentgateway copies client request headers, Authorization included, onto the
+# upstream MCP request unless a JWT/backendAuth policy strips or replaces it (v1.6.0
+# mcp/upstream/mod.rs `apply`; verified locally, see deploy/onclappc02/APPLY.md). The key is
+# never logged: no access-log field reads the Authorization header.
+- name: cfde-mcp
+  matches: [{path: {pathPrefix: /cfde-mcp}}]
+  backends:
+  - mcp:
+      targets:
+      - name: cfde-mcp
+        mcp: {host: https://mcp.cfde.cloud/mcp}
+        policies: {http: {requestTimeout: 120s}}

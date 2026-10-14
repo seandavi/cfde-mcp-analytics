@@ -1,0 +1,48 @@
+# cfde-mcp.cancerdatasci.org: agentgateway in front of the CFDE MCP servers, plus the reference
+# server. Apply steps: deploy/onclappc02/APPLY.md. Pattern: monode infrastructure/INDEX.md
+# (Traefik labels, grey-cloud DNS + LE via tls.certresolver=cloudflare, external `proxy` network).
+#
+#   docker compose -f deploy/onclappc02/docker-compose.yml up -d --build
+#
+# Access log: JSON lines appended to ${CFDE_MCP_LOG_DIR}/gateway.log on the host, tailed by the
+# shared Vector and rotated by logrotate.d/cfde-mcp (copytruncate).
+name: cfde-mcp
+
+services:
+  gateway:
+    build: ./gateway
+    image: cfde-mcp-gateway:v1.6.0
+    container_name: cfde-mcp-gateway
+    restart: unless-stopped
+    # Host uid:gid so the log file on the bind mount is owned by the operator, not root.
+    user: "${CFDE_MCP_UID:-1727698091}:${CFDE_MCP_GID:-1727698091}"
+    volumes:
+      - ./gateway.yaml:/etc/agentgateway/config.yaml:ro,z
+      - ${CFDE_MCP_LOG_DIR:-/data/davsean/cfde_mcp_logs}:/logs:z
+    depends_on: [reference]
+    networks: [proxy, internal]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.cfde-mcp.rule=Host(`cfde-mcp.cancerdatasci.org`)"
+      - "traefik.http.routers.cfde-mcp.entrypoints=websecure"
+      - "traefik.http.routers.cfde-mcp.tls=true"
+      - "traefik.http.routers.cfde-mcp.tls.certresolver=cloudflare"
+      - "traefik.http.services.cfde-mcp.loadbalancer.server.port=3000"
+
+  # Ground-truth server (D7). Not on `proxy`: reachable only through the gateway at /reference.
+  reference:
+    build: ../../reference-server
+    image: cfde-reference-mcp:local
+    container_name: cfde-mcp-reference
+    restart: unless-stopped
+    networks: [internal]
+    # Its one-line-per-tools/call stdout is the ground truth for the ±5% check (verify_counts.sh).
+    logging:
+      driver: json-file
+      options: {max-size: 50m, max-file: "5"}
+
+networks:
+  proxy:
+    external: true
+  internal: {}

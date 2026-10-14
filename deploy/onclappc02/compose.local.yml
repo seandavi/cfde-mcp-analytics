@@ -1,0 +1,16 @@
+# Local validation overlay: no Traefik labels, no `proxy` network, gateway on a loopback port,
+# separate container names. Safe to run next to the production stack.
+#
+#   CFDE_MCP_LOG_DIR=$PWD/.local-logs docker compose -p cfde-mcp-test \
+#     -f deploy/onclappc02/docker-compose.yml -f deploy/onclappc02/compose.local.yml up -d --build
+services:
+  gateway:
+    container_name: cfde-mcp-test-gateway
+    labels: !reset []
+    networks: !override [internal]
+    ports: ["127.0.0.1:${CFDE_MCP_TEST_PORT:-13311}:3000"]
+  reference:
+    container_name: cfde-mcp-test-reference
+
+networks:
+  proxy: !reset {}
