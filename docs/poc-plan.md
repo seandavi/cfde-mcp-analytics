@@ -15,24 +15,9 @@ Latency is a sanity check only.
 
 ## Design in one picture
 
-```
- MCP clients (Claude, Cursor, VS Code, agents)
-        | https://cfde-mcp.cancerdatasci.org/<server>/mcp
-        v
- Traefik (existing; TLS; access log keeps Mcp-* headers)  --+
-        v                                                   |
- agentgateway (1 replica, per-server routes,                | JSON logs
-   JSON access log: server, method, tool, isError,          |
-   protocol version, clientInfo/User-Agent, hashed client)--+
-        |                                                   v
-        +--> GlyGen, PWB, PerturbSeqr, cfde-mcp     Vector (existing)
-        +--> cfde-reference-mcp (ours, FastMCP)             v
-        +--> stdio target (optional)              ClickHouse mcp_requests (raw, 90d TTL)
-                                                            v  daily timer
-                                                  Postgres analytics.mcp_* (aggregates)
-                                                            v
-                                                  cfde-atlas (dashboard/chat) + reports
-```
+<picture><source media="(prefers-color-scheme: dark)" srcset="figures/architecture-dark.svg"><img alt="POC architecture: MCP clients reach per-server URLs through Traefik and agentgateway to team-hosted servers, the reference server and an optional stdio target; Traefik and gateway logs flow through Vector to ClickHouse, a daily rollup to Postgres analytics.mcp_*, and cfde-atlas; a collector adds registry download counts." src="figures/architecture-light.svg"></picture>
+
+*Blue: serving path and consumers. Green: our code. Violet: data plane. Amber: external (team-hosted servers, public registries). Coral dashed: privacy boundary; nothing past Vector holds tool arguments, results or raw IPs. Dashed boxes are optional.*
 
 ## Decisions
 
@@ -91,12 +76,20 @@ Run agentgateway locally with routes to GlyGen, PWB and PerturbSeqr (public, no 
 - A Vector source and transform from the gateway's JSON log, which drops anything not in the schema (the privacy guard lives here).
 - Traefik header fields (D8) via a monode PR.
 
+<picture><source media="(prefers-color-scheme: dark)" srcset="figures/sequence-tool-call-dark.svg"><img alt="Sequence of one tools/call through Traefik and agentgateway to an upstream server, with the gateway's access-log line shipped by Vector to ClickHouse, and the legacy 2025-11-25 initialize/session path as an alternate." src="figures/sequence-tool-call-light.svg"></picture>
+
+*One tools/call. A 2026-07-28 client puts the method, tool and protocol version in headers and clientInfo in the body `_meta`; a legacy 2025-11-25 client opens a session with initialize, and the gateway reads the same fields from the JSON-RPC body. Solid arrows are requests, dashed are responses or async log shipping.*
+
 **Exit:** a traffic-script run shows up in ClickHouse within 5% of the reference server's own count, and nothing else is stored.
 
 ### Phase 5: Metrics and dashboard
 - A daily systemd timer (per SCHEDULING.md, ntfy on failure) that rolls `mcp_requests` up into Postgres `analytics.mcp_daily` (server × tool × client × outcome) and `analytics.mcp_clients_monthly`, with column comments for cfde-atlas.
 - A floor-metrics collector: PyPI, npm and Docker pull counts plus MCP Registry entries for the inventory's packages, into `analytics.mcp_downloads_daily`.
 - The dashboard per D5.
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="figures/sequence-daily-rollup-dark.svg"><img alt="Sequence of the daily systemd timer: rollup from ClickHouse to Postgres analytics.mcp_daily and mcp_clients_monthly, the downloads collector writing mcp_downloads_daily, an ntfy alert on failure, and cfde-atlas reading Postgres." src="figures/sequence-daily-rollup-light.svg"></picture>
+
+*The daily jobs. Green: our jobs. Violet: data plane. Amber: public registries. Coral: the failure alert. Blue: cfde-atlas reading the aggregates.*
 
 **Exit:** cfde-atlas (or the chosen dashboard) answers "MCP calls by server and client app, last 30 days".
 
@@ -115,6 +108,11 @@ Run agentgateway locally with routes to GlyGen, PWB and PerturbSeqr (public, no 
 - At least one team agrees to publish the CFDE URL as canonical.
 
 ## Out of scope for the POC
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="figures/coverage-dark.svg"><img alt="Coverage: remote servers via the CFDE URL and gateway-hosted stdio servers are visible; the same servers via their original URLs, local stdio installs and third-party wrappers such as GTEx and Enrichr are not, with download counts as a floor for the last two." src="figures/coverage-light.svg"></picture>
+
+*What the gateway can and cannot see. Blue: measured per call. Amber: download counts only, a floor. Coral: not visible to CFDE.*
+
 - Telemetry SDKs embedded in team packages (stdio installs); downloads are the floor.
 - Latency SLOs, alerting beyond uptime, multi-replica HA.
 - An aggregated `/all/mcp` endpoint.

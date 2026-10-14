@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 960" width="1500" height="960" role="img" aria-label="Sequence of the daily rollup. A systemd timer starts the rollup job, which aggregates yesterday&#x27;s ClickHouse mcp_requests by server, tool, client and outcome and upserts Postgres analytics.mcp_daily and analytics.mcp_clients_monthly. The timer also starts the downloads collector, which fetches download and pull counts and registry entries from PyPI, npm, Docker Hub and the MCP Registry into analytics.mcp_downloads_daily. If a unit fails or hangs, OnFailure sends an ntfy push. cfde-atlas reads the Postgres tables at any time.">
+<title>Sequence of the daily rollup. A systemd timer starts the rollup job, which aggregates yesterday&#x27;s ClickHouse mcp_requests by server, tool, client and outcome and upserts Postgres analytics.mcp_daily and analytics.mcp_clients_monthly. The timer also starts the downloads collector, which fetches download and pull counts and registry entries from PyPI, npm, Docker Hub and the MCP Registry into analytics.mcp_downloads_daily. If a unit fails or hangs, OnFailure sends an ntfy push. cfde-atlas reads the Postgres tables at any time.</title>
+<defs><marker id="ah-MUTED" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5a6c"/></marker><marker id="ah-BLUE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f7fc4"/></marker><marker id="ah-GREEN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4f8f17"/></marker><marker id="ah-AMBER" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b87a00"/></marker><marker id="ah-CORAL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#cc4733"/></marker><marker id="ah-VIOLET" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6e4fd0"/></marker></defs>
+<path d="M95,96 L95,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="10.0" y="30" width="170" height="66" rx="12" fill="#cc47331a" stroke="#cc4733" stroke-width="2"/>
+<text x="95.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">ntfy</text>
+<text x="95.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">push alerts</text>
+<path d="M280,96 L280,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="195.0" y="30" width="170" height="66" rx="12" fill="#4f8f171a" stroke="#4f8f17" stroke-width="2"/>
+<text x="280.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">systemd timer</text>
+<text x="280.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">daily</text>
+<path d="M465,96 L465,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="380.0" y="30" width="170" height="66" rx="12" fill="#4f8f171a" stroke="#4f8f17" stroke-width="2"/>
+<text x="465.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">rollup job</text>
+<text x="465.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">ours</text>
+<path d="M650,96 L650,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="565.0" y="30" width="170" height="66" rx="12" fill="#6e4fd01a" stroke="#6e4fd0" stroke-width="2"/>
+<text x="650.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">ClickHouse</text>
+<text x="650.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">mcp_requests</text>
+<path d="M835,96 L835,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="750.0" y="30" width="170" height="66" rx="12" fill="#6e4fd01a" stroke="#6e4fd0" stroke-width="2"/>
+<text x="835.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">Postgres</text>
+<text x="835.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">analytics.mcp_*</text>
+<path d="M1020,96 L1020,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="935.0" y="30" width="170" height="66" rx="12" fill="#4f8f171a" stroke="#4f8f17" stroke-width="2"/>
+<text x="1020.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">collector</text>
+<text x="1020.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">downloads</text>
+<path d="M1205,96 L1205,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="1120.0" y="30" width="170" height="66" rx="12" fill="#b87a001a" stroke="#b87a00" stroke-width="2"/>
+<text x="1205.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">Registries</text>
+<text x="1205.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">PyPI, npm, Docker</text>
+<path d="M1390,96 L1390,900" stroke="#4a5a6c" stroke-width="1.4" stroke-dasharray="3 5"/>
+<rect x="1305.0" y="30" width="170" height="66" rx="12" fill="#1f7fc41a" stroke="#1f7fc4" stroke-width="2"/>
+<text x="1390.0" y="60" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#14202e" font-weight="650" text-anchor="middle" xml:space="preserve">cfde-atlas</text>
+<text x="1390.0" y="86" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="400" text-anchor="middle" xml:space="preserve">dashboard, chat</text>
+<rect x="10" y="115" width="1475" height="455" rx="6" fill="none" stroke="#4a5a6c" stroke-width="1.4"/>
+<path d="M10,143 L355.16,143 L367.16,131 L367.16,115" fill="#ffffff" stroke="none"/>
+<path d="M10,143 L355.16,143 L367.16,131 L367.16,115" fill="#4a5a6c1a" stroke="#4a5a6c" stroke-width="1.4"/>
+<text x="20" y="134" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4a5a6c" font-weight="700" text-anchor="start" xml:space="preserve">daily (OnCalendar, per SCHEDULING.md)</text>
+<path d="M280,175 L461,175" fill="none" stroke="#4f8f17" stroke-width="2" marker-end="url(#ah-GREEN)"/>
+<rect x="344.8" y="149" width="55.4" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="372.5" y="164" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">start</text>
+<path d="M465,245 L646,245" fill="none" stroke="#4f8f17" stroke-width="2" marker-end="url(#ah-GREEN)"/>
+<rect x="469.04" y="183" width="176.92" height="56" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="557.5" y="198" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">aggregate yesterday</text>
+<text x="557.5" y="216" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">by server, tool,</text>
+<text x="557.5" y="234" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">client, outcome</text>
+<path d="M650,285 L469,285" fill="none" stroke="#6e4fd0" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ah-VIOLET)"/>
+<rect x="534.14" y="259" width="46.72" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="557.5" y="274" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#6e4fd0" font-weight="500" text-anchor="middle" xml:space="preserve">rows</text>
+<path d="M465,345 L831,345" fill="none" stroke="#4f8f17" stroke-width="2" marker-end="url(#ah-GREEN)"/>
+<rect x="531.16" y="301" width="237.68" height="38" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="650.0" y="316" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">UPSERT mcp_daily</text>
+<text x="650.0" y="334" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">UPSERT mcp_clients_monthly</text>
+<path d="M280,400 L1016,400" fill="none" stroke="#4f8f17" stroke-width="2" marker-end="url(#ah-GREEN)"/>
+<rect x="622.3" y="374" width="55.4" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="650.0" y="389" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">start</text>
+<path d="M1020,450 L1201,450" fill="none" stroke="#4f8f17" stroke-width="2" marker-end="url(#ah-GREEN)"/>
+<rect x="1037.06" y="406" width="150.88" height="38" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="1112.5" y="421" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">GET counts,</text>
+<text x="1112.5" y="439" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">registry entries</text>
+<path d="M1205,490 L1024,490" fill="none" stroke="#b87a00" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ah-AMBER)"/>
+<rect x="1037.06" y="464" width="150.88" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="1112.5" y="479" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#b87a00" font-weight="500" text-anchor="middle" xml:space="preserve">downloads, pulls</text>
+<path d="M1020,545 L839,545" fill="none" stroke="#4f8f17" stroke-width="2" marker-end="url(#ah-GREEN)"/>
+<rect x="839.04" y="501" width="176.92" height="38" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="927.5" y="516" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">UPSERT</text>
+<text x="927.5" y="534" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4f8f17" font-weight="500" text-anchor="middle" xml:space="preserve">mcp_downloads_daily</text>
+<rect x="10" y="590" width="1475" height="120" rx="6" fill="none" stroke="#cc4733" stroke-width="1.4"/>
+<path d="M10,618 L259.68,618 L271.68,606 L271.68,590" fill="#ffffff" stroke="none"/>
+<path d="M10,618 L259.68,618 L271.68,606 L271.68,590" fill="#cc47331a" stroke="#cc4733" stroke-width="1.4"/>
+<text x="20" y="609" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#cc4733" font-weight="700" text-anchor="start" xml:space="preserve">alt: a unit fails or hangs</text>
+<path d="M280,660 L99,660" fill="none" stroke="#cc4733" stroke-width="2" marker-end="url(#ah-CORAL)"/>
+<rect x="142.44" y="634" width="90.12" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="187.5" y="649" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#cc4733" font-weight="500" text-anchor="middle" xml:space="preserve">OnFailure</text>
+<rect x="310" y="640" width="467.3" height="33" rx="8" fill="#ffffff" stroke="#cc4733" stroke-width="1.5"/>
+<rect x="310" y="640" width="467.3" height="33" rx="8" fill="#cc473314"/>
+<text x="322" y="662" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">operator gets a push; earlier aggregates are unaffected</text>
+<rect x="10" y="730" width="1475" height="155" rx="6" fill="none" stroke="#1f7fc4" stroke-width="1.4"/>
+<path d="M10,758 L285.72,758 L297.72,746 L297.72,730" fill="#ffffff" stroke="none"/>
+<path d="M10,758 L285.72,758 L297.72,746 L297.72,730" fill="#1f7fc41a" stroke="#1f7fc4" stroke-width="1.4"/>
+<text x="20" y="749" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#1f7fc4" font-weight="700" text-anchor="start" xml:space="preserve">any time: reading the numbers</text>
+<path d="M1390,800 L839,800" fill="none" stroke="#1f7fc4" stroke-width="2" marker-end="url(#ah-BLUE)"/>
+<rect x="885.16" y="774" width="454.68" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="1112.5" y="789" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#1f7fc4" font-weight="500" text-anchor="middle" xml:space="preserve">SELECT calls by server and client app, last 30 days</text>
+<path d="M835,860 L1386,860" fill="none" stroke="#6e4fd0" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#ah-VIOLET)"/>
+<rect x="1011.02" y="834" width="202.96" height="20" rx="5" fill="#ffffff" opacity="0.92"/>
+<text x="1112.5" y="849" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#6e4fd0" font-weight="500" text-anchor="middle" xml:space="preserve">rows + column comments</text>
+<text x="20" y="933" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#4a5a6c" font-weight="700" text-anchor="start" xml:space="preserve">LEGEND</text>
+<rect x="100" y="920" width="24" height="16" rx="4" fill="#4f8f171a" stroke="#4f8f17" stroke-width="2"/>
+<text x="134" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">Our jobs</text>
+<rect x="228.0" y="920" width="24" height="16" rx="4" fill="#6e4fd01a" stroke="#6e4fd0" stroke-width="2"/>
+<text x="262.0" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">Data plane</text>
+<rect x="371.0" y="920" width="24" height="16" rx="4" fill="#b87a001a" stroke="#b87a00" stroke-width="2"/>
+<text x="405.0" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">External registries</text>
+<rect x="581.5" y="920" width="24" height="16" rx="4" fill="#1f7fc41a" stroke="#1f7fc4" stroke-width="2"/>
+<text x="615.5" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">Consumer</text>
+<rect x="709.5" y="920" width="24" height="16" rx="4" fill="#cc47331a" stroke="#cc4733" stroke-width="2"/>
+<text x="743.5" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">Failure alert</text>
+<path d="M875.0,928 L899.0,928" stroke="#4a5a6c" stroke-width="2.2" marker-end="url(#ah-MUTED)"/>
+<text x="909.0" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">Request</text>
+<path d="M995.5,928 L1019.5,928" stroke="#4a5a6c" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#ah-MUTED)"/>
+<text x="1029.5" y="933" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#14202e" font-weight="400" text-anchor="start" xml:space="preserve">Response</text>
+</svg>
