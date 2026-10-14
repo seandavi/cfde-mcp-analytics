@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+# agentgateway v1.6.0 — Phase 1 spike. See docs/spike-agentgateway.md.
+config:
+  statsAddr: 127.0.0.1:15020      # Prometheus /metrics
+  adminAddr: 127.0.0.1:15000
+  logging:
+    format: json
+gateways:
+  default:
+    port: 3311
+frontendPolicies:
+  accessLog:
+    # Built-in field, logged by default: the upstream's JSON-RPC error message verbatim.
+    # Servers can echo argument values into it (verified in the spike), so drop it.
+    # mcp.error.code stays. If tracing is enabled, add `remove: [mcp.error.message]` there too.
+    remove: [mcp.error.message]
+    add:
+      # Privacy (D6): every field below extracts a scalar. Never log mcp.tool.arguments,
+      # mcp.tool.result, request.body or response.body whole.
+      mcp.protocol.version: 'coalesce(request.headers["mcp-protocol-version"], json(request.body).params.protocolVersion)'
+      # Client-facing session token (legacy only). Join key from `initialize` to later calls;
+      # the built-in mcp.session.id on the initialize line is NOT the token the client reuses.
+      mcp.client.session: 'coalesce(response.headers["mcp-session-id"], request.headers["mcp-session-id"])'
+      user_agent: 'request.headers["user-agent"]'
+      # clientInfo: legacy clients send it only in `initialize`; 2026-07-28 clients in every _meta.
+      mcp.client.name: 'coalesce(json(request.body).params.clientInfo.name, json(request.body).params._meta["io.modelcontextprotocol/clientInfo"].name)'
+      mcp.client.version: 'coalesce(json(request.body).params.clientInfo.version, json(request.body).params._meta["io.modelcontextprotocol/clientInfo"].version)'
+      # Tool-level error (HTTP 200, result.isError). Absent when the server omits isError (= ok).
+      # Legacy JSON-RPC errors (HTTP 200) are built in as mcp.error.code.
+      mcp.tool.is_error: 'mcp.tool.result.isError'
+      # 2026-07-28 upstreams return JSON-RPC errors as HTTP 4xx, where mcp.error.code is not set.
+      mcp.rpc_error.code: 'json(response.body).error.code'
+routes:
+- name: glygen
+  matches: [{path: {pathPrefix: /glygen}}]
+  backends:
+  - mcp:
+      targets:
+      - name: glygen
+        mcp: {host: https://mcp.glygen.org/mcp}
+        policies: {http: {requestTimeout: 120s}}  # default upstream timeout is 10s
+- name: pwb
+  matches: [{path: {pathPrefix: /pwb}}]
+  backends:
+  - mcp:
+      targets:
+      - name: pwb
+        mcp: {host: https://playbook-workflow-builder.cloud/api/mcp}
+        policies: {http: {requestTimeout: 120s}}  # default upstream timeout is 10s
+- name: perturbseqr
+  matches: [{path: {pathPrefix: /perturbseqr}}]
+  backends:
+  - mcp:
+      targets:
+      - name: perturbseqr
+        mcp: {host: https://perturbseqr.maayanlab.cloud/mcp}
+        policies: {http: {requestTimeout: 120s}}  # default upstream timeout is 10s
