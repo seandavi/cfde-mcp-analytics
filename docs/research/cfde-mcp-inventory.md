@@ -22,7 +22,7 @@ Method: `gh search repos` and `gh search code` (org-scoped, for example `streama
 
 | Server | Owner | Repo | Transport | SDK | License | Last push | Notes |
 |---|---|---|---|---|---|---|---|
-| GenSeCo gene-set MCP | Broad DIG (Flannick lab, which runs the CFDE **Knowledge Center**) | https://github.com/broadinstitute/dig-gene-set-mcp | Remote-capable Streamable HTTP `/mcp`, bearer auth, **"Request logging"** and rate limiting built in. No public URL found. | Python, hand-rolled Flask JSON-RPC (no SDK) | BSD-3-Clause | 2026-07-08 | **Unverified** whether this belongs to CFDE KC. DRC-Portals also references a "GSC" database, so check with KC/DRC. |
+| GenSeCo gene-set MCP | Broad DIG (Flannick lab, which runs the CFDE **Knowledge Center**) | https://github.com/broadinstitute/dig-gene-set-mcp | Remote-capable Streamable HTTP `/mcp`, bearer auth, **"Request logging"** and rate limiting built in. No public URL found. | Python, hand-rolled Flask JSON-RPC (no SDK) | BSD-3-Clause | 2026-07-08 | **Confirmed CFDE KC deliverable** (per CFDE metrics lead, 2026-10-14); treat as official. Hosted URL still unknown; ask KC. |
 | Bioindex MCP (SSE) prototype | Broad DIG (Flannick lab) | https://github.com/broadinstitute/dig-misc-projects/blob/main/src/main/python/GenAI/MCP/SseProtocol/bioindexSseServer.py | SSE prototype that only has a `greeting` tool | Python FastMCP | None | 2025-07-17 | Toy prototype. KC "bioindex" is the KC's data API. |
 | smaht-agent-kit | GitHub org `smaht-ai` (no name or URL on the org) | https://github.com/smaht-ai/smaht-agent-kit | Not a server. It is an eval harness for MCP agents. | Python | MIT | 2025-10-14 | **Unverified** link to the SMaHT DAC; no smaht-dac repo mentions MCP |
 
@@ -66,5 +66,5 @@ Aggregator servers also wrap some CFDE resources (Enrichr, GTEx, CELLxGENE), amo
    - GlyGen team (glygener org).
    - Bridge2AI Standards team (bridge2ai org).
    - Taylor Research Lab, CHOP, for Data Distillery DDKG, which is pre-deployment and the right time to add instrumentation.
-   - Broad DIG / Flannick lab for the KC, to confirm whether GenSeCo/dig-gene-set-mcp is a KC deliverable.
+   - Broad DIG / Flannick lab for the KC, for GenSeCo/dig-gene-set-mcp (confirmed KC deliverable): get its hosted URL so it can join the POC.
    - The `QuentinCody/*` repo owner, the most prolific third-party author of hosted DCC wrappers.
