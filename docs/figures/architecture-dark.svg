@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1460 1120" width="1460" height="1120" role="img" aria-label="POC architecture. MCP clients reach one stable URL per server at cfde-mcp.cancerdatasci.org. Traefik terminates TLS and logs Mcp-* headers; agentgateway routes /glygen, /pwb, /perturbseqr and /cfde-mcp (bearer pass-through) to the team-hosted servers, /reference to our cfde-reference-mcp, and optionally runs a stdio server. Both access logs go to Vector, which drops every field not in the schema, then to ClickHouse mcp_requests (90-day TTL). A daily timer rolls them up into Postgres analytics.mcp_*, alongside a floor-metrics collector&#x27;s download counts from PyPI, npm, Docker Hub and the MCP Registry; cfde-atlas reads Postgres. No arguments, results or raw IPs are stored past Vector.">
+<title>POC architecture. MCP clients reach one stable URL per server at cfde-mcp.cancerdatasci.org. Traefik terminates TLS and logs Mcp-* headers; agentgateway routes /glygen, /pwb, /perturbseqr and /cfde-mcp (bearer pass-through) to the team-hosted servers, /reference to our cfde-reference-mcp, and optionally runs a stdio server. Both access logs go to Vector, which drops every field not in the schema, then to ClickHouse mcp_requests (90-day TTL). A daily timer rolls them up into Postgres analytics.mcp_*, alongside a floor-metrics collector&#x27;s download counts from PyPI, npm, Docker Hub and the MCP Registry; cfde-atlas reads Postgres. No arguments, results or raw IPs are stored past Vector.</title>
+<defs><marker id="ah-MUTED" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a9b8ca"/></marker><marker id="ah-BLUE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4aa8e8"/></marker><marker id="ah-GREEN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9fd05a"/></marker><marker id="ah-AMBER" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f2b441"/></marker><marker id="ah-CORAL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff7a66"/></marker><marker id="ah-VIOLET" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b49cff"/></marker></defs>
+<text x="280" y="205" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#a9b8ca" font-weight="600" text-anchor="middle" xml:space="preserve">one stable URL per server</text>
+<text x="280" y="228" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">https://cfde-mcp.cancerdatasci.org/&lt;server&gt;/mcp</text>
+<rect x="20" y="250" width="230" height="170" rx="12" fill="#4aa8e81a" stroke="#4aa8e8" stroke-width="2"/>
+<text x="36" y="280" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">MCP clients</text>
+<text x="36" y="308" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">Claude, Cursor,</text>
+<text x="36" y="330" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">VS Code, agents</text>
+<rect x="310" y="250" width="230" height="170" rx="12" fill="#4aa8e81a" stroke="#4aa8e8" stroke-width="2"/>
+<text x="326" y="280" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">Traefik</text>
+<text x="326" y="308" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">existing proxy</text>
+<text x="326" y="330" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">TLS (Let&#x27;s Encrypt)</text>
+<text x="326" y="352" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">access log keeps</text>
+<text x="326" y="374" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">Mcp-* headers</text>
+<path d="M250,335 L305,335" fill="none" stroke="#4aa8e8" stroke-width="2.2" marker-end="url(#ah-BLUE)"/>
+<rect x="600" y="40" width="330" height="590" rx="12" fill="#4aa8e81a" stroke="#4aa8e8" stroke-width="2"/>
+<text x="616" y="70" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">agentgateway</text>
+<text x="616" y="98" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">1 replica · JSON access log</text>
+<path d="M540,335 L595,335" fill="none" stroke="#4aa8e8" stroke-width="2.2" marker-end="url(#ah-BLUE)"/>
+<rect x="995" y="100" width="450" height="340" rx="16" fill="none" stroke="#f2b441" stroke-width="1.8" stroke-dasharray="5 6"/>
+<text x="1011" y="92" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#f2b441" font-weight="700" text-anchor="start" xml:space="preserve">TEAM-HOSTED REMOTE SERVERS</text>
+<rect x="616" y="131" width="115.48" height="26" rx="13.0" fill="#4aa8e822" stroke="#4aa8e8"/>
+<text x="673.74" y="148" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">/glygen/mcp</text>
+<rect x="1010" y="108" width="420" height="72" rx="12" fill="#f2b4411a" stroke="#f2b441" stroke-width="2"/>
+<text x="1026" y="138" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">GlyGen</text>
+<text x="1026" y="165" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">mcp.glygen.org · GlyGen DCC</text>
+<path d="M930,144 L1005,144" fill="none" stroke="#f2b441" stroke-width="2.2" marker-end="url(#ah-AMBER)"/>
+<rect x="616" y="215" width="89.44" height="26" rx="13.0" fill="#4aa8e822" stroke="#4aa8e8"/>
+<text x="660.72" y="232" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">/pwb/mcp</text>
+<rect x="1010" y="192" width="420" height="72" rx="12" fill="#f2b4411a" stroke="#f2b441" stroke-width="2"/>
+<text x="1026" y="222" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">Playbook Workflow Builder</text>
+<text x="1026" y="249" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">playbook-workflow-builder.cloud</text>
+<path d="M930,228 L1005,228" fill="none" stroke="#f2b441" stroke-width="2.2" marker-end="url(#ah-AMBER)"/>
+<rect x="616" y="299" width="158.88" height="26" rx="13.0" fill="#4aa8e822" stroke="#4aa8e8"/>
+<text x="695.44" y="316" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">/perturbseqr/mcp</text>
+<rect x="1010" y="276" width="420" height="72" rx="12" fill="#f2b4411a" stroke="#f2b441" stroke-width="2"/>
+<text x="1026" y="306" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">PerturbSeqr</text>
+<text x="1026" y="333" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">perturbseqr.maayanlab.cloud · DRC</text>
+<path d="M930,312 L1005,312" fill="none" stroke="#f2b441" stroke-width="2.2" marker-end="url(#ah-AMBER)"/>
+<rect x="616" y="383" width="132.84" height="26" rx="13.0" fill="#4aa8e822" stroke="#4aa8e8"/>
+<text x="682.42" y="400" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">/cfde-mcp/mcp</text>
+<text x="758.84" y="401" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" fill="#a9b8ca" font-weight="500" text-anchor="start" xml:space="preserve">bearer pass-through</text>
+<rect x="1010" y="360" width="420" height="72" rx="12" fill="#f2b4411a" stroke="#f2b441" stroke-width="2"/>
+<text x="1026" y="390" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">cfde-mcp</text>
+<text x="1026" y="417" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">mcp.cfde.cloud · DRC · API key</text>
+<path d="M930,396 L1005,396" fill="none" stroke="#f2b441" stroke-width="2.2" marker-end="url(#ah-AMBER)"/>
+<rect x="616" y="467" width="141.51999999999998" height="26" rx="13.0" fill="#4aa8e822" stroke="#4aa8e8"/>
+<text x="686.76" y="484" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">/reference/mcp</text>
+<rect x="1010" y="444" width="420" height="72" rx="12" fill="#9fd05a1a" stroke="#9fd05a" stroke-width="2"/>
+<text x="1026" y="474" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">cfde-reference-mcp (ours)</text>
+<text x="1026" y="501" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">FastMCP · ground-truth counter</text>
+<path d="M930,480 L1005,480" fill="none" stroke="#9fd05a" stroke-width="2.2" marker-end="url(#ah-GREEN)"/>
+<rect x="616" y="551" width="115.48" height="26" rx="13.0" fill="#4aa8e822" stroke="#4aa8e8" stroke-dasharray="5 4"/>
+<text x="673.74" y="568" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#4aa8e8" font-weight="600" text-anchor="middle" xml:space="preserve">/&lt;name&gt;/mcp</text>
+<text x="741.48" y="569" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" fill="#a9b8ca" font-weight="500" text-anchor="start" xml:space="preserve">stdio subprocess</text>
+<rect x="1010" y="528" width="420" height="72" rx="12" fill="#f2b4411a" stroke="#f2b441" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="1026" y="558" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">stdio target (optional)</text>
+<text x="1026" y="585" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">e.g. Standards Explorer, run by gateway</text>
+<path d="M930,564 L1005,564" fill="none" stroke="#f2b441" stroke-width="2.2" stroke-dasharray="7 6" marker-end="url(#ah-AMBER)"/>
+<path d="M425,420 L425,725" fill="none" stroke="#b49cff" stroke-width="2.2" marker-end="url(#ah-VIOLET)"/>
+<rect x="352.9" y="537.0" width="144.2" height="46" rx="5" fill="#0d1117" opacity="0.92"/>
+<text x="425" y="556.0" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#b49cff" font-weight="500" text-anchor="middle" xml:space="preserve">Traefik log</text>
+<text x="425" y="575.0" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#b49cff" font-weight="500" text-anchor="middle" xml:space="preserve">(Mcp-* headers)</text>
+<path d="M765,630 L765,665 L540,665 L540,725" fill="none" stroke="#b49cff" stroke-width="2.2" marker-end="url(#ah-VIOLET)"/>
+<rect x="578.56" y="651.5" width="152.88" height="27" rx="5" fill="#0d1117" opacity="0.92"/>
+<text x="655" y="670.5" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#b49cff" font-weight="500" text-anchor="middle" xml:space="preserve">gateway JSON log</text>
+<rect x="270" y="730" width="330" height="150" rx="12" fill="#b49cff1a" stroke="#b49cff" stroke-width="2"/>
+<text x="286" y="760" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">Vector (existing)</text>
+<text x="286" y="788" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">tails both logs</text>
+<text x="286" y="810" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">privacy transform:</text>
+<text x="286" y="832" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">drops every field</text>
+<text x="286" y="854" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">not in the schema</text>
+<rect x="660" y="715" width="790" height="330" rx="16" fill="none" stroke="#ff7a66" stroke-width="1.8" stroke-dasharray="5 6"/>
+<text x="676" y="705" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#ff7a66" font-weight="700" text-anchor="start" xml:space="preserve">PRIVACY BOUNDARY: NO ARGS, RESULTS OR RAW IPS INSIDE</text>
+<rect x="680" y="730" width="280" height="150" rx="12" fill="#b49cff1a" stroke="#b49cff" stroke-width="2"/>
+<text x="696" y="760" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">ClickHouse</text>
+<text x="696" y="788" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">mcp_requests</text>
+<text x="696" y="810" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">raw rows</text>
+<text x="696" y="832" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">90-day TTL</text>
+<path d="M600,805 L675,805" fill="none" stroke="#b49cff" stroke-width="2.2" marker-end="url(#ah-VIOLET)"/>
+<rect x="1060" y="730" width="370" height="150" rx="12" fill="#b49cff1a" stroke="#b49cff" stroke-width="2"/>
+<text x="1076" y="760" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">Postgres analytics.mcp_*</text>
+<text x="1076" y="788" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">mcp_daily</text>
+<text x="1076" y="810" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">mcp_clients_monthly</text>
+<text x="1076" y="832" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">mcp_downloads_daily</text>
+<path d="M960,790 L1055,790" fill="none" stroke="#b49cff" stroke-width="2.2" marker-end="url(#ah-VIOLET)"/>
+<rect x="979.3" y="732.0" width="57.4" height="46" rx="5" fill="#0d1117" opacity="0.92"/>
+<text x="1008" y="751.0" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#b49cff" font-weight="500" text-anchor="middle" xml:space="preserve">daily</text>
+<text x="1008" y="770.0" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="14" fill="#b49cff" font-weight="500" text-anchor="middle" xml:space="preserve">timer</text>
+<rect x="1060" y="935" width="370" height="95" rx="12" fill="#4aa8e81a" stroke="#4aa8e8" stroke-width="2"/>
+<text x="1076" y="965" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">cfde-atlas</text>
+<text x="1076" y="993" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">dashboard, chat, reports</text>
+<path d="M1245,880 L1245,930" fill="none" stroke="#b49cff" stroke-width="2.2" marker-end="url(#ah-VIOLET)"/>
+<rect x="680" y="935" width="280" height="95" rx="12" fill="#9fd05a1a" stroke="#9fd05a" stroke-width="2"/>
+<text x="696" y="965" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">Floor-metrics collector</text>
+<text x="696" y="993" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">daily download counts</text>
+<path d="M960,982 L1010,982 L1010,850 L1055,850" fill="none" stroke="#9fd05a" stroke-width="2.2" marker-end="url(#ah-GREEN)"/>
+<rect x="270" y="935" width="330" height="95" rx="12" fill="#f2b4411a" stroke="#f2b441" stroke-width="2"/>
+<text x="286" y="965" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#e8eef6" font-weight="650" text-anchor="start" xml:space="preserve">Public registries</text>
+<text x="286" y="993" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">PyPI, npm, Docker Hub,</text>
+<text x="286" y="1015" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#a9b8ca" font-weight="400" text-anchor="start" xml:space="preserve">MCP Registry</text>
+<path d="M600,982 L675,982" fill="none" stroke="#f2b441" stroke-width="2.2" marker-end="url(#ah-AMBER)"/>
+<text x="20" y="1093" font-family="'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="13" fill="#a9b8ca" font-weight="700" text-anchor="start" xml:space="preserve">LEGEND</text>
+<rect x="100" y="1080" width="24" height="16" rx="4" fill="#4aa8e81a" stroke="#4aa8e8" stroke-width="2"/>
+<text x="134" y="1093" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#e8eef6" font-weight="400" text-anchor="start" xml:space="preserve">Serving path and consumers</text>
+<rect x="363.0" y="1080" width="24" height="16" rx="4" fill="#9fd05a1a" stroke="#9fd05a" stroke-width="2"/>
+<text x="397.0" y="1093" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#e8eef6" font-weight="400" text-anchor="start" xml:space="preserve">Our code</text>
+<rect x="491.0" y="1080" width="24" height="16" rx="4" fill="#b49cff1a" stroke="#b49cff" stroke-width="2"/>
+<text x="525.0" y="1093" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#e8eef6" font-weight="400" text-anchor="start" xml:space="preserve">Data plane</text>
+<rect x="634.0" y="1080" width="24" height="16" rx="4" fill="#f2b4411a" stroke="#f2b441" stroke-width="2"/>
+<text x="668.0" y="1093" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#e8eef6" font-weight="400" text-anchor="start" xml:space="preserve">External (team-hosted, registries)</text>
+<rect x="957.0" y="1080" width="24" height="16" rx="4" fill="#ff7a661a" stroke="#ff7a66" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="991.0" y="1093" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#e8eef6" font-weight="400" text-anchor="start" xml:space="preserve">Privacy boundary</text>
+<rect x="1145.0" y="1080" width="24" height="16" rx="4" fill="#a9b8ca1a" stroke="#a9b8ca" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="1179.0" y="1093" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="15" fill="#e8eef6" font-weight="400" text-anchor="start" xml:space="preserve">Dashed = optional</text>
+</svg>
