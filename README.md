@@ -13,7 +13,7 @@ independent teams. Operational metrics (latency etc.) are secondary.
 |-----|--------|---------|
 | [MCP usage metrics: approaches](docs/research/mcp-usage-metrics.md) | done | Spec signals (2026-07-28 stateless MCP, `Mcp-Method`/`Mcp-Name` headers), OTel MCP semconv, analytics products, privacy, download/registry stats; recommends a gateway for remote servers, shared OTel schema, and download counts as a floor. |
 | CFDE MCP server inventory (`docs/research/cfde-mcp-inventory.md`) | in progress | Existing CFDE / Common Fund MCP servers, remote vs. stdio, SDK, owners. |
-| MCP gateways/proxies (`docs/research/mcp-gateways.md`) | in progress | Gateway comparison and POC recommendation. |
+| [MCP gateways/proxies](docs/research/mcp-gateways.md) | done | Compares ~15 gateways. POC pick: agentgateway (Prometheus `mcp_requests_total` by server/tool, OTel, stdio hosting); runner-up IBM ContextForge (built-in dashboard); plain Caddy/nginx header logging as a control. Per-server routes, no aggregated endpoint for OAuth servers. |
 
 ## Next
 
