@@ -1,0 +1,94 @@
+{
+    "servers": [
+        {
+            "server": {
+                "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+                "name": "io.github.pipeworx-io/gtex",
+                "description": "GTEx \u2014 Genotype-Tissue Expression human gene-expression atlas",
+                "title": "Gtex",
+                "repository": {
+                    "url": "https://github.com/pipeworx-io/mcp-gtex",
+                    "source": "github"
+                },
+                "version": "0.1.0",
+                "websiteUrl": "https://pipeworx.io/packs/gtex",
+                "remotes": [
+                    {
+                        "type": "streamable-http",
+                        "url": "https://gateway.pipeworx.io/gtex/mcp"
+                    }
+                ]
+            },
+            "_meta": {
+                "io.modelcontextprotocol.registry/official": {
+                    "status": "active",
+                    "statusChangedAt": "2026-05-18T16:48:13.358648Z",
+                    "publishedAt": "2026-05-18T16:48:13.358648Z",
+                    "updatedAt": "2026-05-18T16:48:13.358648Z",
+                    "isLatest": false
+                }
+            }
+        },
+        {
+            "server": {
+                "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+                "name": "io.github.pipeworx-io/gtex",
+                "description": "GTEx MCP.",
+                "title": "Gtex",
+                "repository": {
+                    "url": "https://github.com/pipeworx-io/mcp-gtex",
+                    "source": "github"
+                },
+                "version": "0.1.1",
+                "websiteUrl": "https://pipeworx.io/packs/gtex",
+                "remotes": [
+                    {
+                        "type": "streamable-http",
+                        "url": "https://gateway.pipeworx.io/gtex/mcp"
+                    }
+                ]
+            },
+            "_meta": {
+                "io.modelcontextprotocol.registry/official": {
+                    "status": "active",
+                    "statusChangedAt": "2026-09-25T00:02:12.927145Z",
+                    "publishedAt": "2026-09-25T00:02:12.927145Z",
+                    "updatedAt": "2026-09-25T00:02:12.927145Z",
+                    "isLatest": false
+                }
+            }
+        },
+        {
+            "server": {
+                "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+                "name": "io.github.pipeworx-io/gtex",
+                "description": "GTEx MCP.",
+                "title": "Gtex",
+                "repository": {
+                    "url": "https://github.com/pipeworx-io/mcp-gtex",
+                    "source": "github"
+                },
+                "version": "0.1.2",
+                "websiteUrl": "https://pipeworx.io/packs/gtex",
+                "remotes": [
+                    {
+                        "type": "streamable-http",
+                        "url": "https://gateway.pipeworx.io/gtex/mcp"
+                    }
+                ]
+            },
+            "_meta": {
+                "io.modelcontextprotocol.registry/official": {
+                    "status": "active",
+                    "statusChangedAt": "2026-09-26T19:01:24.339635Z",
+                    "publishedAt": "2026-09-26T19:01:24.339635Z",
+                    "updatedAt": "2026-09-26T19:01:24.339635Z",
+                    "isLatest": true
+                }
+            }
+        }
+    ],
+    "metadata": {
+        "count": 3
+    }
+}

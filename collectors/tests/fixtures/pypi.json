@@ -1,0 +1,21 @@
+{
+ "data": [
+  {
+   "category": "without_mirrors",
+   "date": "2026-10-07",
+   "downloads": 2
+  },
+  {
+   "category": "without_mirrors",
+   "date": "2026-10-10",
+   "downloads": 2
+  },
+  {
+   "category": "without_mirrors",
+   "date": "2026-10-12",
+   "downloads": 2
+  }
+ ],
+ "package": "standards-explorer-mcp",
+ "type": "overall_downloads"
+}

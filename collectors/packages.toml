@@ -1,0 +1,25 @@
+# Packages whose public download / pull counts are tracked as a usage "floor".
+# Seeded from docs/research/cfde-mcp-inventory.md. Add a package by PR; the diff is the audit trail.
+
+# pypistats.org daily downloads (mirrors excluded, ~180 days retained upstream).
+pypi = [
+    "standards-explorer-mcp", # Bridge2AI Standards Explorer (official, stdio)
+]
+
+# api.npmjs.org daily downloads (last month, re-fetched each run).
+npm = [
+    "@pipeworx/mcp-gtex",  # Pipeworx GTEx (third party)
+    "enrichr-mcp-server",  # tianqitang1 Enrichr (third party)
+]
+
+# Docker Hub cumulative pull_count, snapshotted once per run.
+dockerhub = [
+    "johnkgardner/perturbseqr-mcp", # PerturbSeqr (Ma'ayan Lab / CFDE DRC)
+    "maayanlab/drc-portal-mcp",     # cfde-mcp (CFDE DRC)
+]
+
+# Official MCP Registry entries (server names). The registry has no usage stats;
+# we snapshot how many versions are published, which doubles as a presence check.
+mcp_registry = [
+    "io.github.pipeworx-io/gtex",
+]

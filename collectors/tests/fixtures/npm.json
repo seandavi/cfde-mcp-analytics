@@ -1,0 +1,19 @@
+{
+ "start": "2026-09-13",
+ "end": "2026-10-12",
+ "package": "@pipeworx/mcp-gtex",
+ "downloads": [
+  {
+   "downloads": 2,
+   "day": "2026-10-10"
+  },
+  {
+   "downloads": 3,
+   "day": "2026-10-11"
+  },
+  {
+   "downloads": 2,
+   "day": "2026-10-12"
+  }
+ ]
+}
